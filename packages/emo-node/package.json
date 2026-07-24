@@ -62,7 +62,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@bjorn3/browser_wasi_shim": "^0.3.0"
+    "@bjorn3/browser_wasi_shim": "^0.3.0",
+    "@desert-ant-labs/core": "^0.3.0"
   },
   "optionalDependencies": {
     "koffi": "^2.9.0"
