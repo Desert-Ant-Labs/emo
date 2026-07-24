@@ -3,29 +3,18 @@
 // condition of `#platform` (see package.json "imports"), so none of the
 // node-only code in platform-node.js ever enters the browser module graph.
 // This is what lets one `@desert-ant-labs/emo` import build cleanly for the
-// browser target of multi-target bundlers (Next, Remix, SvelteKit, Nuxt).
+// browser target of multi-target bundlers (Next, Remix, SvelteKit, Nuxt). The
+// shared instantiation logic lives in @desert-ant-labs/core.
+import { browserSetup, browserWasmDir, browserReadModelSource, browserCacheRoot } from "@desert-ant-labs/core";
 
-// Instantiate the wasm core and hand back its exports.
-export async function setupCore() {
-  globalThis.__EmoHost ??= {};
-  const { init } = await import("./dist/index.js");
-  await init({});
-  return globalThis.__EmoExports;
+export function setupCore() {
+  return browserSetup({
+    hostGlobal: "__EmoHost",
+    exportsGlobal: "__EmoExports",
+    init: () => import("./dist/index.js"),
+  });
 }
 
-// Where LiteRT.js loads its own Wasm runtime from. In the browser we default to
-// the jsDelivr mirror of the package's wasm/ directory.
-export async function defaultWasmDir() {
-  return "https://cdn.jsdelivr.net/npm/@litertjs/core/wasm/";
-}
-
-// In the browser the model "source" is already the model bytes.
-export async function readModelSource(source) {
-  return source;
-}
-
-// No managed on-disk cache in the browser; the runtime caches in the browser
-// (Cache API / IndexedDB) with an empty base.
-export async function defaultCacheRoot() {
-  return "";
-}
+export const defaultWasmDir = browserWasmDir;
+export const readModelSource = browserReadModelSource;
+export const defaultCacheRoot = browserCacheRoot;
