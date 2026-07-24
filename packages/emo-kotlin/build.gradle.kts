@@ -51,8 +51,11 @@ kotlin {
 }
 
 dependencies {
+    // Reusable Android host bridge (ai.desertant.core.HostBridge + FfiReader),
+    // shared across the Desert Ant model SDKs. Brings kotlinx-serialization-json
+    // transitively (HostBridge parses the Hub tree JSON with it).
+    implementation("ai.desertant:core:0.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     // Emo is a small model, so the AAR depends on the LiteRT resources module by
     // default: normal installs bundle the model and work offline. Consumers who
     // want download-on-demand exclude this transitive artifact (see the README).
