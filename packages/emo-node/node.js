@@ -15,8 +15,6 @@ import { loadNative } from "@desert-ant-labs/core/node";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const SKIN_TONES = { default: 0, light: 1, mediumLight: 2, medium: 3, mediumDark: 4, dark: 5 };
-const MODEL_REPO = "desert-ant-labs/emo";
-const MODEL_REVISION = "v0.7.0";
 
 // The prebuilt native for this host lives in native/<platform>-<arch>/ next to
 // this file (built by `mise run node-natives`): the self-contained Swift core
@@ -77,13 +75,14 @@ export class Emo {
    */
   static async load(options = {}) {
     const onProgress = typeof options.onProgress === "function" ? options.onProgress : undefined;
-    // The Swift package still supports bundled resources for native apps. The
-    // npm package does not ship that bundle, so Node always passes an explicit
-    // model directory. By default it mirrors the native managed-cache layout;
-    // `directory` still adopts a consumer-provided folder for offline use.
+    // Directory is null by default: the native core (built without the bundled-
+    // model trait) downloads into the single managed cache layout that
+    // desert-ant-core owns - <cacheRoot>/desert-ant-models/<repo>/<revision> -
+    // shared by every Desert Ant SDK and by the browser/wasm path. An explicit
+    // `directory` adopts a consumer-provided folder for offline use.
     const cacheRoot = options.cacheRoot ?? core.defaultCacheRoot();
-    const modelDirectory = options.directory ?? path.join(cacheRoot, "desert-ant-models", MODEL_REPO, MODEL_REVISION);
-    const handle = lib.create(cacheRoot, modelDirectory);
+    const directory = options.directory ?? null;
+    const handle = lib.create(cacheRoot, directory);
     if (!handle) throw new Error("@desert-ant-labs/emo: failed to create suggester");
     const emo = new Emo(handle);
     // Ready the model now (download if needed) so the first suggestion is instant
