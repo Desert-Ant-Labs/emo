@@ -1,0 +1,21 @@
+name: Build
+
+# Verify this SDK compiles on every platform it ships to. The pipeline lives in
+# desert-ant-core's reusable model-sdk-build workflow, shared by every model SDK,
+# so this file only names the version of it to use.
+#
+# Jobs: swift-apple, swift-linux, android (natives + AAR), wasm, and node-native
+# on both host OSes. Build-only - nothing is published.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: Desert-Ant-Labs/desert-ant-core/.github/workflows/model-sdk-build.yml@v0.5.5
