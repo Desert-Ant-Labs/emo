@@ -44,7 +44,7 @@ Requirements: iOS 16+, macOS 13+, tvOS 16+, watchOS 9+, visionOS 1+, and Swift 5
 Add Emo with Swift Package Manager:
 
 ```swift
-.package(url: "https://github.com/Desert-Ant-Labs/emo.git", from: "0.10.0")
+.package(url: "https://github.com/Desert-Ant-Labs/emo.git", from: "0.10.1")
 ```
 
 Then add the `Emo` product to your app target.
@@ -52,7 +52,7 @@ Then add the `Emo` product to your app target.
 The Core ML model is bundled by default because Emo is small. `EmoCoreMLResources` remains available for explicit bundle construction and tests. SwiftPM consumers who prefer on-demand download or an explicit model directory can disable the default `BundledModel` trait:
 
 ```swift
-.package(url: "https://github.com/Desert-Ant-Labs/emo.git", from: "0.10.0", traits: [])
+.package(url: "https://github.com/Desert-Ant-Labs/emo.git", from: "0.10.1", traits: [])
 ```
 
 With the trait disabled, `Emo()` downloads on demand and `Emo(directory:)` loads from or downloads into your chosen directory.
