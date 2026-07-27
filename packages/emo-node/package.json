@@ -1,6 +1,6 @@
 {
   "name": "@desert-ant-labs/emo",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "On-device multilingual emoji suggestion for JavaScript. Runs in the browser (WebAssembly + LiteRT.js) and server-side in Node (native), from one import.",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE.md",

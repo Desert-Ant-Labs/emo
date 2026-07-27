@@ -37,7 +37,7 @@ let jsDependencies: [Package.Dependency] = noJavaScriptKit ? [] : [
 let packageDependencies: [Package.Dependency] = [
     // Reusable cross-platform primitives (JSON, ModelStore, TextNormalization,
     // Inference, FFIBuffer, HostBridge, PlatformSupport, ModelResources).
-    .package(url: "https://github.com/Desert-Ant-Labs/desert-ant-core.git", from: "0.5.1"),
+    .package(url: "https://github.com/Desert-Ant-Labs/desert-ant-core.git", from: "0.5.3"),
 ] + jsDependencies
 
 let wasmProducts: [Product] = noJavaScriptKit ? [] : [

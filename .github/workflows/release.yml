@@ -23,5 +23,5 @@ permissions:
 
 jobs:
   release:
-    uses: Desert-Ant-Labs/desert-ant-core/.github/workflows/model-sdk-release.yml@v0.5.1
+    uses: Desert-Ant-Labs/desert-ant-core/.github/workflows/model-sdk-release.yml@v0.5.3
     secrets: inherit
