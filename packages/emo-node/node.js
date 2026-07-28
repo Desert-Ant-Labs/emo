@@ -27,16 +27,17 @@ const core = loadNative({
     create: "void* emo_create(const char*, const char*)",
     isDownloaded: "int emo_is_downloaded(void*)",
     download: "int emo_download(void*)",
-    run: "void* emo_run(void*, const char*, int, int)",
+    runGrouped: "void* emo_run_grouped(void*, const char*, int, int, const char*, const char*)",
     destroy: "void emo_destroy(void*)",
     stringFree: "void emo_string_free(void*)",
   },
 });
-const { lib, callAsync, decodeResult } = core;
+const { lib, callAsync, decodeResult, withCallGroup } = core;
 
-/** Decode the FFI buffer the core returns: a u32 count, then per suggestion a
- *  u32-length UTF-8 emoji string and an IEEE-754 double confidence, read off the
- *  shared FfiReader. Mirrors `emo_run` in Sources/EmoAndroid/CABI.swift. */
+/** Decode the FFI buffer the core returns (via `decodeResult`, positioned at the
+ *  payload): a u32 count, then per suggestion a u32-length UTF-8 emoji string
+ *  and an IEEE-754 double confidence. Mirrors `emo_run` in
+ *  Sources/EmoAndroid/CABI.swift and the Kotlin FfiReader. */
 function decodeSuggestions(r) {
   const count = r.u32();
   const out = [];
@@ -99,6 +100,15 @@ export class Emo {
   /**
    * Suggest emojis for `text`, most likely first. Returns up to `limit`
    * `{ emoji, confidence }` suggestions; empty input returns `[]`.
+   *
+   * Usage is tracked automatically. By default each call is its own billed
+   * usage call. Pass `options.group` (an id from {@link withCallGroup}) to bill
+   * several calls as one — a logical operation made of multiple suggestions.
+   *
+   * Pass `options.deviceId` (a string, or a zero-arg function returning one) to
+   * attribute usage to a specific end-user device on multi-tenant hosts. It is
+   * collected per call and bound to that call, so it is safe under concurrency.
+   * Omit to attribute to the host device.
    */
   async suggestions(text, options = {}) {
     if (!this.#handle) throw new Error("@desert-ant-labs/emo: suggester disposed");
@@ -106,13 +116,34 @@ export class Emo {
     if (phrase.trim() === "") return [];
     const limit = options.limit ?? 3;
     const skinTone = SKIN_TONES[options.skinTone ?? "default"] ?? 0;
-    const ptr = await callAsync(lib.run, this.#handle, phrase, limit, skinTone);
+    const deviceId = typeof options.deviceId === "function" ? options.deviceId() : options.deviceId;
+    const group = options.group != null ? String(options.group) : null;
+    const ptr = await callAsync(
+      lib.runGrouped, this.#handle, phrase, limit, skinTone, group, deviceId != null ? String(deviceId) : null);
     if (!ptr) throw new Error("@desert-ant-labs/emo: suggestion failed");
     try {
       return decodeSuggestions(decodeResult(ptr));
     } finally {
       lib.stringFree(ptr);
     }
+  }
+
+  /**
+   * Run `body` with a call group, so every `suggestions({ group })` inside it
+   * bills as a single usage call (rather than one per suggestion). Use it for a
+   * logical operation that issues several suggestions but should count once:
+   *
+   * ```js
+   * await emo.withCallGroup(async (group) => {
+   *   await emo.suggestions("a", { group });
+   *   await emo.suggestions("b", { group });  // same group -> counted as one call
+   * });
+   * ```
+   *
+   * The group is released when `body` settles.
+   */
+  withCallGroup(body) {
+    return withCallGroup(body);
   }
 
   /** Free the native handle. Call when you are done with the suggester. */

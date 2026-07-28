@@ -37,7 +37,7 @@ let jsDependencies: [Package.Dependency] = noJavaScriptKit ? [] : [
 let packageDependencies: [Package.Dependency] = [
     // Reusable cross-platform primitives (JSON, ModelStore, TextNormalization,
     // Inference, FFIBuffer, HostBridge, PlatformSupport, ModelResources).
-    .package(url: "https://github.com/Desert-Ant-Labs/desert-ant-core.git", from: "0.5.3"),
+    .package(url: "https://github.com/Desert-Ant-Labs/desert-ant-core.git", revision: "a967f68"),
 ] + jsDependencies
 
 let wasmProducts: [Product] = noJavaScriptKit ? [] : [
@@ -111,6 +111,7 @@ let androidTarget: Target = .target(
     dependencies: [
         "Emo",
         .product(name: "FFIBuffer", package: "desert-ant-core"),
+        .product(name: "Inference", package: "desert-ant-core"),
         .product(name: "HostBridge", package: "desert-ant-core", condition: .when(platforms: [.android])),
         .product(name: "ModelStore", package: "desert-ant-core", condition: .when(platforms: [.android])),
         .product(name: "PlatformSupport", package: "desert-ant-core"),

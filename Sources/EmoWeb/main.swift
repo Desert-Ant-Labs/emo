@@ -2,6 +2,7 @@
 import Inference
 import JavaScriptEventLoop
 import JavaScriptKit
+import Usage
 @_spi(EmoBindings) import Emo
 
 // WebAssembly entry point. Mirrors the iOS/Swift SDK (suggestion only). The JS
@@ -10,10 +11,14 @@ import JavaScriptKit
 // start, the module exposes:
 //
 //     globalThis.__EmoExports = {
-//       load(cacheRoot, directory?, onProgress?)  -> Promise<boolean>,
-//       loadBundled(metaJSON, tokenizerBytes)     -> Promise<boolean>,
-//       suggest(text, limit?, skinTone?)          -> Promise<[{emoji, confidence}]>,
+//       load(cacheRoot, directory?, onProgress?)          -> Promise<boolean>,
+//       loadBundled(metaJSON, tokenizerBytes, modelBytes) -> Promise<boolean>,
+//       suggest(text, limit?, skinTone?, deviceId?)       -> Promise<[{emoji, confidence}]>,
 //     }
+//
+// `deviceId` may be a string or a zero-arg function returning one; it is
+// collected per call and bound to that call's task tree (safe for concurrent
+// multi-tenant hosts), attributing usage to a specific end-user device.
 //
 // `skinTone` is a number: 0 default, 1 light, 2 mediumLight, 3 medium,
 // 4 mediumDark, 5 dark. `packages/emo-node` wraps this in the public typed API;
@@ -48,14 +53,26 @@ private func encode(_ suggestions: [EmoSuggestion]) -> JSValue {
     return .object(arr)
 }
 
+private func collectDeviceId(_ value: JSValue?) -> String? {
+    guard let value else { return nil }
+    if let string = value.string, !string.isEmpty { return string }
+    if let getter = value.function, let string = getter().string, !string.isEmpty { return string }
+    return nil
+}
+
 let suggestFn = JSClosure { args in
     let text = args.first?.string ?? ""
     let limit = args.count > 1 ? Int(args[1].number ?? 3) : 3
     let tone = skinTone(args.count > 2 ? args[2].number : nil)
+    // Collect the per-call device id now (before any await), then bind it to
+    // this call's task tree so concurrent calls stay isolated.
+    let deviceId = collectDeviceId(args.count > 3 ? args[3] : nil)
     return JSPromise { resolve in
         Task {
             do {
-                let suggestions = try await instance().suggestions(for: text, limit: limit, skinTone: tone)
+                let suggestions = try await InferenceContext.$deviceId.withValue(deviceId) {
+                    try await instance().suggestions(for: text, limit: limit, skinTone: tone)
+                }
                 resolve(.success(encode(suggestions)))
             } catch {
                 resolve(.failure(.string(String(describing: error))))
@@ -108,7 +125,7 @@ let loadBundledFn = JSClosure { args in
                 guard let metaJSON, let tokenizer else { throw EmoError.modelNotFound }
                 let assets = try ModelAssets(
                     metaJSON: metaJSON, tokenizer: tokenizer,
-                    session: JSInferenceSession(hostGlobal: "__EmoHost"))
+                    session: inferenceSession(hostGlobal: "__EmoHost"))
                 let emo = Emo(assets: assets)
                 try await emo.waitUntilLoaded()
                 suggester = emo
@@ -120,9 +137,22 @@ let loadBundledFn = JSClosure { args in
     }.jsValue
 }
 
+// flushTelemetry(): force any tracked session to emit now (bypassing the 3s
+// debounce + re-emit window) and await the send, so the usage POST actually
+// goes out before the caller continues. Requires `globalThis.__dalHttpDebug`.
+let flushTelemetryFn = JSClosure { _ in
+    JSPromise { resolve in
+        Task {
+            await TelemetryDebug.shared.flushAndWait()
+            resolve(.success(.boolean(true)))
+        }
+    }.jsValue
+}
+
 let exports = JSObject.global.Object.function!.new()
 exports.load = .object(loadFn)
 exports.loadBundled = .object(loadBundledFn)
 exports.suggest = .object(suggestFn)
+exports.flushTelemetry = .object(flushTelemetryFn)
 JSObject.global.__EmoExports = .object(exports)
 #endif

@@ -21,6 +21,13 @@ export interface SuggestOptions {
   limit?: number;
   /** Preferred skin tone for skin-tone-capable emoji (default `"default"`). */
   skinTone?: EmojiSkinTone;
+  /**
+   * Attributes usage to a specific end-user device (multi-tenant hosts serving
+   * many users). A string, or a zero-arg function returning one, collected per
+   * call and bound to that call so it is safe under concurrency. Omit to use
+   * the default device. Honored by both the WebAssembly and native Node builds.
+   */
+  deviceId?: string | (() => string);
 }
 
 /**
