@@ -1,6 +1,7 @@
 #if !os(WASI)
 @_spi(EmoBindings) import Emo
 import FFIBuffer
+import Inference   // InferenceContext.withCallGroup(id:), for grouped runs
 import PlatformSupport
 
 // C ABI over the Emo core, called by the Swift JNI entry points in
@@ -14,6 +15,7 @@ import PlatformSupport
 //   emo_is_downloaded(handle)                                  -> 0/1
 //   emo_download(handle)                                       -> 0/-1  (blocks)
 //   emo_run(handle, textUTF8, limit, skinTone)                 -> buffer | NULL
+//   emo_run_grouped(handle, textUTF8, limit, skinTone, groupId)-> buffer | NULL
 //   emo_destroy(handle)
 //   emo_string_free(ptr)
 //
@@ -116,11 +118,44 @@ public func emo_run(
     _ handle: UnsafeMutableRawPointer?, _ text: UnsafePointer<CChar>?,
     _ limit: Int32, _ skinToneRaw: Int32
 ) -> UnsafeMutablePointer<CChar>? {
+    runSuggestions(handle, text, limit, skinToneRaw, groupId: nil)
+}
+
+/// Like `emo_run`, but attributes usage to the shared call group named `groupId`
+/// (reused across SDKs, via desert-ant-core): every run sharing the id bills as
+/// one call, and to a specific end-user `deviceId` (multi-tenant hosts serving
+/// many users). Both are optional — pass NULL to omit either. Used by the Node
+/// build; each call binds its own device, safe under concurrency. Release the
+/// call group with `dal_call_group_end`. (Android calls plain `emo_run` and
+/// resolves its own device via the host bridge, so it needs no `deviceId` here.)
+@_cdecl("emo_run_grouped")
+public func emo_run_grouped(
+    _ handle: UnsafeMutableRawPointer?, _ text: UnsafePointer<CChar>?,
+    _ limit: Int32, _ skinToneRaw: Int32,
+    _ groupId: UnsafePointer<CChar>?, _ deviceId: UnsafePointer<CChar>?
+) -> UnsafeMutablePointer<CChar>? {
+    runSuggestions(
+        handle, text, limit, skinToneRaw,
+        groupId: groupId.map { String(cString: $0) },
+        deviceId: deviceId.map { String(cString: $0) })
+}
+
+/// Shared body for `emo_run`/`emo_run_grouped`: run and encode suggestions,
+/// binding the shared call group `groupId` and the end-user `deviceId` into the
+/// InferenceContext when set.
+private func runSuggestions(
+    _ handle: UnsafeMutableRawPointer?, _ text: UnsafePointer<CChar>?,
+    _ limit: Int32, _ skinToneRaw: Int32, groupId: String?, deviceId: String? = nil
+) -> UnsafeMutablePointer<CChar>? {
     guard let emo = emo(handle), let text else { return nil }
     let phrase = String(cString: text)
     let tone = skinTone(skinToneRaw)
     let payload: [UInt8]? = blockingValue {
-        let suggestions = (try? await emo.suggestions(for: phrase, limit: Int(limit), skinTone: tone)) ?? []
+        let suggestions = await InferenceContext.$deviceId.withValue(deviceId) {
+            await InferenceContext.withCallGroup(id: groupId) {
+                (try? await emo.suggestions(for: phrase, limit: Int(limit), skinTone: tone)) ?? []
+            }
+        }
         var w = FFIWriter()
         w.u32(suggestions.count)
         for s in suggestions {

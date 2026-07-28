@@ -1,33 +1,33 @@
 {
-  "originHash": "d7822dc62dca9725217c2bfa62b70baab94c0e3502460f8ca8eb132f7c194347",
-  "pins": [
+  "originHash" : "4d3f09eb8643dd8ad73fc26db50f173f23b02e53ec0a8013e2b84414c23b244d",
+  "pins" : [
     {
-      "identity": "desert-ant-core",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/Desert-Ant-Labs/desert-ant-core.git",
-      "state": {
-        "revision": "134e85d725aab94f2f4a7bcf014af1688227bce0",
-        "version": "0.5.3"
+      "identity" : "desert-ant-core",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Desert-Ant-Labs/desert-ant-core.git",
+      "state" : {
+        "branch" : "a967f68",
+        "revision" : "a967f6833e7f928a8e494a8cbc6f5a8d81e97e0f"
       }
     },
     {
-      "identity": "javascriptkit",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/swiftwasm/JavaScriptKit",
-      "state": {
-        "revision": "22905075f8b61834810babe5fb9a2f613f22f398",
-        "version": "0.56.1"
+      "identity" : "javascriptkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftwasm/JavaScriptKit",
+      "state" : {
+        "revision" : "22905075f8b61834810babe5fb9a2f613f22f398",
+        "version" : "0.56.1"
       }
     },
     {
-      "identity": "swift-syntax",
-      "kind": "remoteSourceControl",
-      "location": "https://github.com/swiftlang/swift-syntax",
-      "state": {
-        "revision": "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
-        "version": "603.0.2"
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
       }
     }
   ],
-  "version": 3
+  "version" : 3
 }

@@ -96,11 +96,15 @@ export class Emo {
   /**
    * Suggest emojis for a phrase, most likely first. Returns up to `limit`
    * `{ emoji, confidence }` suggestions; empty input returns `[]`.
+   *
+   * `options.deviceId` (a string or a zero-arg function returning one)
+   * attributes usage to a specific end-user device. It is collected per call
+   * and bound to that call, so it is safe for concurrent multi-tenant hosts.
    */
   async suggestions(text, options = {}) {
     const limit = options.limit ?? 3;
     const skinTone = SKIN_TONES[options.skinTone ?? "default"] ?? 0;
-    return core.suggest(String(text ?? ""), limit, skinTone);
+    return core.suggest(String(text ?? ""), limit, skinTone, options.deviceId);
   }
 
   /**

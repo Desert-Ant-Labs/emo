@@ -12,6 +12,14 @@ import EmoCoreMLResources
 import EmoTFLiteResources
 #endif
 
+/// This SDK's usage identity, attached to every emitted telemetry body's `sdk`
+/// field so usage attributes to Emo (not the underlying desert-ant-core).
+let emoSDKInfo = SDKInfo(name: "Emo", version: emoSDKVersion)
+
+/// The Emo SDK version. Keep in sync with the package version (single-sourced
+/// from packages/emo-node/package.json; see `mise run set-version`).
+let emoSDKVersion = "0.7.0"
+
 /// The model's file names and per-platform artifacts, in one place.
 enum EmoModel {
     static let meta = "emo_meta.json"
@@ -45,7 +53,7 @@ public struct ModelAssets: Sendable {
         self.init(
             metaJSON: metaJSON,
             tokenizer: tokenizerBytes,
-            session: try inferenceSession(modelBytes: modelBytes))
+            session: try inferenceSession(modelBytes: modelBytes, sdk: emoSDKInfo))
     }
 
     /// Bindings entry point: load the artifact from a file path (the Node
@@ -58,7 +66,7 @@ public struct ModelAssets: Sendable {
         self.init(
             metaJSON: metaJSON,
             tokenizer: tokenizerBytes,
-            session: try inferenceSession(modelPath: modelPath))
+            session: try inferenceSession(modelPath: modelPath, sdk: emoSDKInfo))
     }
 
     /// Bindings entry point: build from an already-constructed session (e.g. the
@@ -76,7 +84,7 @@ public struct ModelAssets: Sendable {
         ModelAssets(
             metaJSON: try files.readString(EmoModel.meta),
             tokenizer: try files.read(EmoModel.tokenizer),
-            session: try await files.inferenceSession(model: EmoModel.artifact, hostGlobal: "__EmoHost"))
+            session: try await files.inferenceSession(model: EmoModel.artifact, hostGlobal: "__EmoHost", sdk: emoSDKInfo))
     }
 }
 
@@ -204,7 +212,7 @@ extension ModelAssets {
             return ModelAssets(
                 metaJSON: try resources.readString(EmoModel.meta),
                 tokenizer: try resources.read(EmoModel.tokenizer),
-                session: try inferenceSession(modelPath: try resources.path(EmoModel.artifact)))
+                session: try inferenceSession(modelPath: try resources.path(EmoModel.artifact), sdk: emoSDKInfo))
         } catch {
             throw EmoError.modelNotFound
         }
