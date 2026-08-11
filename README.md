@@ -1,5 +1,29 @@
 # Emo
 
+> [!IMPORTANT]
+> **This repository is deprecated. Development has moved to
+> [`Desert-Ant-Labs/desert-ant-core`](https://github.com/Desert-Ant-Labs/desert-ant-core).**
+>
+> Emo's SDK now lives in that monorepo, written once and bound to every
+> platform, alongside the other Desert Ant model SDKs:
+>
+> | What | Where it lives now |
+> |---|---|
+> | Swift / Core ML | `Sources/Emo/` (SwiftPM product `Emo`) |
+> | JavaScript / TypeScript | `packages/emo-node/` |
+> | Kotlin / Android | `packages/emo-kotlin/` |
+>
+> **Nothing changes for you if you install from a package manager.** The published
+> coordinates are the same: `@desert-ant-labs/emo` on npm, `ai.desertant:emo`
+> on Maven Central, and the model on the Hub at
+> [`desert-ant-labs/emo`](https://huggingface.co/desert-ant-labs/emo).
+> Swift Package Manager users depend on `desert-ant-core` and take its `Emo`
+> product instead of pointing at this repository.
+>
+> Issues and pull requests should go to the monorepo. This repository stays up so
+> existing SwiftPM pins keep resolving, but it no longer receives fixes: the last
+> release from here was `v0.10.2`.
+
 On-device multilingual emoji suggestion for Swift, Android, and JavaScript. Give Emo a short task, calendar entry, note, or message and it returns ranked emoji, across 23 languages. Everything runs locally, so the text never leaves the device or browser.
 
 A hashed script-aware n-gram stream and a small transformer over a pruned multilingual token sequence run through one shared pipeline, so it reads meaning rather than matching keywords, and the results are the same on every platform.
